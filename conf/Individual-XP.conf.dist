@@ -1,8 +1,8 @@
 [worldserver]
 
 #
-#    PlayerAnnounce
-#        Description: This will show the console on what players are logged in
-#        Default:     Enabled  = 1
-#                     Disabled = 0
-PlayerAnnounce = 1
+#    MaxXPRate 
+#        Description: This is the max amount a player can set their xp to.
+#        Default:     Default  = 1
+#                     
+MaxXPRate = 10 

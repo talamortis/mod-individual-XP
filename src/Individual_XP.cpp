@@ -17,8 +17,10 @@ class PlayerXpRate : public DataMap::Base
 public:
     PlayerXpRate() {}
     PlayerXpRate(uint32 XPRate) : XPRate(XPRate) {}
-    uint32 XPRate = 0;
+    uint32 XPRate = 1;
 };
+
+uint32 MaxRate;
 
 class Individual_XP : public PlayerScript
 {
@@ -45,13 +47,13 @@ public:
             CharacterDatabase.PQuery("REPLACE INTO `individualxp` (`CharacterGUID`, `XPRate`) VALUES (%u, %u);", p->GetGUIDLow(), data->XPRate);
     }
 
-    void OnGiveXP(Player* p, uint32& amount, Unit* victim) override
+    void OnGiveXP(Player* p, uint32& amount, Unit* victim)
     {
+        uint32 bonus_xp = amount * p->CustomData.Get<PlayerXpRate>("Individual_XP")->XPRate ;
         uint32 curXP = p->GetUInt32Value(PLAYER_XP);
         uint32 nextLvlXP = p->GetUInt32Value(PLAYER_NEXT_LEVEL_XP);
-        uint32 bonus_xp = p->CustomData.Get<PlayerXpRate>("Individual_XP")->XPRate * amount;
-        uint32 newXP = curXP + amount + bonus_xp;
         uint8 level = p->getLevel();
+        uint32 newXP = curXP + bonus_xp - amount;
 
         while (newXP >= nextLvlXP && level < sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL))
         {
@@ -64,8 +66,8 @@ public:
             nextLvlXP = p->GetUInt32Value(PLAYER_NEXT_LEVEL_XP);
         }
 
-        p->SendLogXPGain(amount, victim, bonus_xp, false, 1.0f);
-        p->SetUInt32Value(PLAYER_XP, newXP);
+        p->SetUInt32Value(PLAYER_XP, (newXP));
+        p->SendLogXPGain(bonus_xp, victim, NULL, false, 1.0f);
     }
 };
 
@@ -85,21 +87,20 @@ public:
 
     static bool HandleIndividualXPCommand(ChatHandler* handler, char const* args)
     {
+        Player* me = handler->GetSession()->GetPlayer();
         if (!*args)
             return false;
-        
-        Player* me = handler->GetSession()->GetPlayer();
-
-        // Crash before Set
-        me->CustomData.Get<PlayerXpRate>("Individual_XP")->XPRate = (uint32)atoi(args); //Return int from command
 
         if (!me)
             return false;
 
-        me->GetSession()->SendAreaTriggerMessage("You have Updated your XP rate to %u", me->CustomData.Get<PlayerXpRate>("Individual_XP")->XPRate);
+        if (atoi(args) > MaxRate || (atoi(args) == 0))
+            return false;
+
+        me->CustomData.Get<PlayerXpRate>("Individual_XP")->XPRate = (uint32)atoi(args); //Return int from command
+
+        me->GetSession()->SendAreaTriggerMessage("You have updated your XP rate to %u", me->CustomData.Get<PlayerXpRate>("Individual_XP")->XPRate);
         return true;
-
-
     }
 };
 
@@ -117,6 +118,7 @@ public:
             sConfigMgr->LoadMore(cfg_def_file.c_str());
 
             sConfigMgr->LoadMore(cfg_file.c_str());
+            MaxRate = sConfigMgr->GetIntDefault("MaxXPRate", 10);
         }
     }
 };
