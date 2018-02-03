@@ -112,11 +112,15 @@ public:
     void OnBeforeConfigLoad(bool reload) override
     {
         if (!reload) {
-            std::string cfg_file = "Individual-XP.conf";
+            std::string conf_path = _CONF_DIR;
+            std::string cfg_file = conf_path + "/Individual-XP.conf";
+
+#ifdef WIN32
+            cfg_file = "Individual-XP.conf";
+#endif
+
             std::string cfg_def_file = cfg_file + ".dist";
-
             sConfigMgr->LoadMore(cfg_def_file.c_str());
-
             sConfigMgr->LoadMore(cfg_file.c_str());
             MaxRate = sConfigMgr->GetIntDefault("MaxXPRate", 10);
         }
