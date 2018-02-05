@@ -94,10 +94,10 @@ public:
         if (!me)
             return false;
 
-        if (atoi(args) > MaxRate || (atoi(args) == 0))
+        if (atol(args) > MaxRate || (atol(args) == 0))
             return false;
 
-        me->CustomData.Get<PlayerXpRate>("Individual_XP")->XPRate = (uint32)atoi(args); //Return int from command
+        me->CustomData.Get<PlayerXpRate>("Individual_XP")->XPRate = (uint32)atol(args); //Return int from command
 
         me->GetSession()->SendAreaTriggerMessage("You have updated your XP rate to %u", me->CustomData.Get<PlayerXpRate>("Individual_XP")->XPRate);
         return true;
