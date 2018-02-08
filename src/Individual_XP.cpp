@@ -73,7 +73,7 @@ public:
     {
         if (!*args)
             return false;
-            
+
         Player* me = handler->GetSession()->GetPlayer();
         if (!me)
             return false;
