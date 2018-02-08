@@ -34,6 +34,7 @@ public:
             Field* fields = result->Fetch();
             p->CustomData.Set("Individual_XP", new PlayerXpRate(fields[0].GetUInt32()));
         }
+        ChatHandler(p->GetSession()).SendSysMessage("This server is running the |cff4CFF00Individual XP |rmodule. Use .SetXP <amount> to change.");
     }
 
     void OnLogout(Player* p) override
