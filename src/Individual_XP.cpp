@@ -2,7 +2,6 @@
 #include "Configuration/Config.h"
 #include "ObjectMgr.h"
 #include "Chat.h"
-#include "Group.h"
 #include "Player.h"
 #include "Object.h"
 #include "DataMap.h"
@@ -29,45 +28,30 @@ public:
 
     void OnLogin(Player* p) override
     {
-        QueryResult result = CharacterDatabase.PQuery("SELECT XPRate FROM individualxp WHERE CharacterGUID = %u", p->GetGUIDLow());
-
-        if (!result)
+        QueryResult result = CharacterDatabase.PQuery("SELECT `XPRate` FROM `individualxp` WHERE `CharacterGUID` = %u", p->GetGUIDLow());
+        if (result)
         {
-            p->CustomData.GetDefault<PlayerXpRate>("Individual_XP")->XPRate;
-            return;
+            Field* fields = result->Fetch();
+            p->CustomData.Set("Individual_XP", new PlayerXpRate(fields[0].GetUInt32()));
         }
-
-        Field* fields = result->Fetch();
-        p->CustomData.Set("Individual_XP", new PlayerXpRate(fields[0].GetUInt32()));
     }
 
     void OnLogout(Player* p) override
     {
         if (PlayerXpRate* data = p->CustomData.Get<PlayerXpRate>("Individual_XP"))
-            CharacterDatabase.PQuery("REPLACE INTO `individualxp` (`CharacterGUID`, `XPRate`) VALUES (%u, %u);", p->GetGUIDLow(), data->XPRate);
+        {
+            uint32 rate = data->XPRate;
+            if (rate <= 1)
+                CharacterDatabase.PDirectExecute("DELETE FROM `individualxp` WHERE `CharacterGUID` = %u", p->GetGUIDLow());
+            else
+                CharacterDatabase.PDirectExecute("REPLACE INTO `individualxp` (`CharacterGUID`, `XPRate`) VALUES (%u, %u);", p->GetGUIDLow(), rate);
+        }
     }
 
-    void OnGiveXP(Player* p, uint32& amount, Unit* victim)
+    void OnGiveXP(Player* p, uint32& amount, Unit* victim) override
     {
-        uint32 bonus_xp = amount * p->CustomData.Get<PlayerXpRate>("Individual_XP")->XPRate ;
-        uint32 curXP = p->GetUInt32Value(PLAYER_XP);
-        uint32 nextLvlXP = p->GetUInt32Value(PLAYER_NEXT_LEVEL_XP);
-        uint8 level = p->getLevel();
-        uint32 newXP = curXP + bonus_xp - amount;
-
-        while (newXP >= nextLvlXP && level < sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL))
-        {
-            newXP -= nextLvlXP;
-
-            if (level < sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL))
-                p->GiveLevel(level + 1);
-
-            level = p->getLevel();
-            nextLvlXP = p->GetUInt32Value(PLAYER_NEXT_LEVEL_XP);
-        }
-
-        p->SetUInt32Value(PLAYER_XP, (newXP));
-        p->SendLogXPGain(bonus_xp, victim, NULL, false, 1.0f);
+        if (PlayerXpRate* data = p->CustomData.Get<PlayerXpRate>("Individual_XP"))
+            amount *= data->XPRate;
     }
 };
 
@@ -87,19 +71,19 @@ public:
 
     static bool HandleIndividualXPCommand(ChatHandler* handler, char const* args)
     {
-        Player* me = handler->GetSession()->GetPlayer();
         if (!*args)
             return false;
-
+            
+        Player* me = handler->GetSession()->GetPlayer();
         if (!me)
             return false;
 
-        if (atol(args) > MaxRate || (atol(args) == 0))
+        uint32 rate = (uint32)atol(args);
+        if (rate == 0 || rate > MaxRate)
             return false;
 
-        me->CustomData.Get<PlayerXpRate>("Individual_XP")->XPRate = (uint32)atol(args); //Return int from command
-
-        me->GetSession()->SendAreaTriggerMessage("You have updated your XP rate to %u", me->CustomData.Get<PlayerXpRate>("Individual_XP")->XPRate);
+        me->CustomData.GetDefault<PlayerXpRate>("Individual_XP")->XPRate = rate;
+        me->GetSession()->SendAreaTriggerMessage("You have updated your XP rate to %u", rate);
         return true;
     }
 };
