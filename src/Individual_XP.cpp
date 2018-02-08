@@ -55,6 +55,9 @@ public:
         uint8 level = p->getLevel();
         uint32 newXP = curXP + bonus_xp - amount;
 
+        if (p->getLevel() == sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL))
+            return;
+
         while (newXP >= nextLvlXP && level < sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL))
         {
             newXP -= nextLvlXP;
@@ -94,7 +97,10 @@ public:
         if (!me)
             return false;
 
-        if (atol(args) > MaxRate || (atol(args) == 0))
+        if (me->getLevel() == sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL))
+            return false;
+
+        if (atoi(args) > MaxRate || (atol(args) == 0))
             return false;
 
         me->CustomData.Get<PlayerXpRate>("Individual_XP")->XPRate = (uint32)atol(args); //Return int from command
