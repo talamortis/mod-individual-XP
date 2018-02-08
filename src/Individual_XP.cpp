@@ -42,9 +42,9 @@ public:
         {
             uint32 rate = data->XPRate;
             if (rate <= 1)
-                CharacterDatabase.DirectExecute("DELETE FROM `individualxp` WHERE `CharacterGUID` = %u", p->GetGUIDLow());
+                CharacterDatabase.DirectPExecute("DELETE FROM `individualxp` WHERE `CharacterGUID` = %u", p->GetGUIDLow());
             else
-                CharacterDatabase.DirectExecute("REPLACE INTO `individualxp` (`CharacterGUID`, `XPRate`) VALUES (%u, %u);", p->GetGUIDLow(), rate);
+                CharacterDatabase.DirectPExecute("REPLACE INTO `individualxp` (`CharacterGUID`, `XPRate`) VALUES (%u, %u);", p->GetGUIDLow(), rate);
         }
     }
 
