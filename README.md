@@ -1,6 +1,11 @@
 # mod-indivisual-XP
 
+#This Module is for Azerothcore - 
 
-This Module is for Azerothcore - 
+# How to install
 
-# This Module is Still a Work In Progress // Please report any issues!
+1) clone this module into the modules directory of the main source
+2) apply the provided sql in the character database
+3) rerun cmake
+4) compile.
+
