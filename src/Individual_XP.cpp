@@ -80,7 +80,7 @@ public:
             return false;
 
         uint32 rate = (uint32)atol(args);
-        if (rate == 0 || rate > MaxRate)
+        if (rate > MaxRate)
             return false;
 
         me->CustomData.GetDefault<PlayerXpRate>("Individual_XP")->XPRate = rate;
