@@ -1,6 +1,6 @@
-# mod-indivisual-XP
+# mod-individual-XP
 
-#This Module is for Azerothcore - 
+Allows players to set their own XP rate.
 
 # How to install
 
